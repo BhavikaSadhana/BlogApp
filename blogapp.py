@@ -6,8 +6,8 @@ import uvicorn
 app = FastAPI()
 
 # File paths
-USER_FILE = "G:\\py\\Details\\register.txt"
-POST_FILE = "G:\\py\\Details\\post.txt"
+USER_FILE = "\\path of the file"
+POST_FILE = "\\path of the file"
 
 # Ensure files exist
 for file in [USER_FILE, POST_FILE]:

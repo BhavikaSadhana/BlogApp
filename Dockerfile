@@ -2,9 +2,8 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Flask and Prometheus exporter
+RUN pip install --no-cache-dir flask prometheus-flask-exporter gunicorn
 
 # Copy application code
 COPY . .
@@ -12,5 +11,5 @@ COPY . .
 # Expose the backend port
 EXPOSE 5000
 
-# Use a production server (e.g. gunicorn) or command that works for the repo
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
+# Start with Gunicorn (adjust app:app if entrypoint is different)
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

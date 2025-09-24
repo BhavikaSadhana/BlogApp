@@ -1,43 +1,33 @@
-from flask import Flask, request, jsonify
-from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+from flask import Flask, request
+from flask_restx import Api, Resource, fields
 
 app = Flask(__name__)
+api = Api(app, version="1.0", title="Blog API",
+          description="A simple Blog API with Swagger UI")
 
-# Prometheus metrics
-user_requests = Counter('user_requests_total', 'Total number of user requests')
+ns = api.namespace('posts', description='Blog operations')
 
-# In-memory storage for blog posts
-blog_posts = []
+# Define model for input validation and Swagger documentation
+post_model = api.model('Post', {
+    'title': fields.String(required=True, description='Title of the post'),
+    'content': fields.String(required=True, description='Content of the post')
+})
 
-@app.route('/')
-def home():
-    return "Welcome to EED BlogApp!"
+# In-memory storage for demo
+posts = []
 
-# Endpoint to add blog post (takes user input)
-@app.route('/add_post', methods=['POST'])
-def add_post():
-    user_requests.inc()
-    data = request.json
-    title = data.get('title')
-    content = data.get('content')
+@ns.route('/add_post')
+class AddPost(Resource):
+    @ns.expect(post_model)  # For Swagger UI
+    def post(self):
+        data = request.json
+        posts.append(data)
+        return {"message": "Post added successfully!", "post": data}, 201
 
-    if not title or not content:
-        return jsonify({'error': 'Title and content are required'}), 400
-
-    post = {'title': title, 'content': content}
-    blog_posts.append(post)
-    return jsonify({'message': 'Post added successfully!', 'post': post}), 201
-
-# Endpoint to list all posts
-@app.route('/posts', methods=['GET'])
-def get_posts():
-    user_requests.inc()
-    return jsonify(blog_posts)
-
-# Endpoint for Prometheus to scrape metrics
-@app.route('/metrics')
-def metrics():
-    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
+@ns.route('/all_posts')
+class AllPosts(Resource):
+    def get(self):
+        return {"posts": posts}, 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

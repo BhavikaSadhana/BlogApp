@@ -1,40 +1,43 @@
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 
 app = Flask(__name__)
 
-# Example blog data
-blogs = [
-    {"id": 1, "title": "First Blog", "content": "Hello, this is my first blog!"},
-    {"id": 2, "title": "Second Blog", "content": "Flask + Prometheus + Grafana demo"}
-]
-
 # Prometheus metrics
-REQUEST_COUNT = Counter("request_count", "Total HTTP Requests", ["method", "endpoint"])
+user_requests = Counter('user_requests_total', 'Total number of user requests')
 
+# In-memory storage for blog posts
+blog_posts = []
 
-@app.before_request
-def before_request():
-    REQUEST_COUNT.labels(request.method, request.path).inc()
+@app.route('/')
+def home():
+    return "Welcome to EED BlogApp!"
 
+# Endpoint to add blog post (takes user input)
+@app.route('/add_post', methods=['POST'])
+def add_post():
+    user_requests.inc()
+    data = request.json
+    title = data.get('title')
+    content = data.get('content')
 
-@app.route("/blogs", methods=["GET"])
-def get_blogs():
-    return jsonify(blogs)
+    if not title or not content:
+        return jsonify({'error': 'Title and content are required'}), 400
 
+    post = {'title': title, 'content': content}
+    blog_posts.append(post)
+    return jsonify({'message': 'Post added successfully!', 'post': post}), 201
 
-@app.route("/blogs/<int:blog_id>", methods=["GET"])
-def get_blog(blog_id):
-    blog = next((b for b in blogs if b["id"] == blog_id), None)
-    if blog:
-        return jsonify(blog)
-    return jsonify({"error": "Blog not found"}), 404
+# Endpoint to list all posts
+@app.route('/posts', methods=['GET'])
+def get_posts():
+    user_requests.inc()
+    return jsonify(blog_posts)
 
-
-@app.route("/metrics")
+# Endpoint for Prometheus to scrape metrics
+@app.route('/metrics')
 def metrics():
-    return generate_latest(), 200, {"Content-Type": CONTENT_TYPE_LATEST}
+    return generate_latest(), 200, {'Content-Type': CONTENT_TYPE_LATEST}
 
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)

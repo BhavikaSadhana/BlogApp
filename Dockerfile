@@ -2,14 +2,9 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install Flask and Prometheus exporter
-RUN pip install --no-cache-dir flask prometheus-flask-exporter gunicorn
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+COPY app.py .
 
-# Expose the backend port
-EXPOSE 5000
-
-# Start with Gunicorn (adjust app:app if entrypoint is different)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["python", "app.py"]

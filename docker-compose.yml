@@ -3,12 +3,9 @@ version: "3.8"
 services:
   blogapp:
     build: .
-    container_name: blogapp_api
+    container_name: blogapp
     ports:
       - "5000:5000"
-    restart: always
-    environment:
-      FLASK_ENV: production
 
   prometheus:
     image: prom/prometheus:latest
@@ -17,18 +14,11 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
-    restart: always
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
-    depends_on:
-      - prometheus
     ports:
       - "3000:3000"
-    volumes:
-      - grafana-data:/var/lib/grafana
-    restart: always
-
-volumes:
-  grafana-data:
+    depends_on:
+      - prometheus
